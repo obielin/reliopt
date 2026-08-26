@@ -40,7 +40,9 @@ Attribution (component ablation) is a separate, not-yet-wired-in module — see
   doing nothing useful. `wilson_lower_bound` is a generic rate-based
   contract: it gates on the lower bound of the Wilson score interval for any
   boolean field, rather than the raw observed proportion, so a threshold
-  can't be cleared on a lucky small sample.
+  can't be cleared on a lucky small sample. `abstain_when_unsupported`
+  internally reuses `wilson_lower_bound` for its correct/relevant rate
+  rather than gating on the raw rate, for the same reason.
 - `Objective`: base class + four built-ins (`accuracy`, `cost`, `latency`,
   `consistency`). `consistency` needs `repeat_n > 1` on the Compiler to mean
   anything — with `repeat_n=1` it always returns 1.0, which is a "not
