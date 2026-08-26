@@ -181,19 +181,25 @@ class Contract:
         """
         Expects a `record["should_abstain"]` (ground truth) and
         `record["abstained"]` (what the program did) pair.
+
+        Gates on the Wilson lower bound of the correct-abstention rate (see
+        `wilson_lower_bound`), not the raw observed rate — a small sample can
+        clear 0.9 on a lucky run without abstention actually being reliable.
         """
 
         def _check(records: list[dict[str, Any]]) -> ContractResult:
             relevant = [r for r in records if r.get("should_abstain") is not None]
             if not relevant:
                 return ContractResult("abstain_when_unsupported", satisfied=True, detail="no applicable records")
-            correct = sum(1 for r in relevant if r.get("should_abstain") == r.get("abstained"))
-            rate = correct / len(relevant)
+
+            derived = [{"_correct": r.get("should_abstain") == r.get("abstained")} for r in relevant]
+            inner = Contract.wilson_lower_bound("_correct", minimum=0.9).evaluate(derived)
             return ContractResult(
                 "abstain_when_unsupported",
-                satisfied=rate >= 0.9,
-                observed_value=rate,
-                threshold=0.9,
+                satisfied=inner.satisfied,
+                observed_value=inner.observed_value,
+                threshold=inner.threshold,
+                detail=inner.detail,
             )
 
         return Contract("abstain_when_unsupported", _check, strict=strict)
