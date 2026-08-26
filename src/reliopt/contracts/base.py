@@ -19,7 +19,9 @@ still be wrapped in a Program and scored against Contracts here.
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
+from statistics import NormalDist
 from typing import Any, Callable, Optional
 
 
@@ -121,6 +123,58 @@ class Contract:
             )
 
         return Contract("tool_scope", _check, strict=strict)
+
+    @staticmethod
+    def wilson_lower_bound(
+        successes_field: str,
+        minimum: float,
+        *,
+        confidence: float = 0.95,
+        strict: bool = True,
+    ) -> "Contract":
+        """
+        Gates on the lower bound of the Wilson score interval for a boolean
+        success-rate field, rather than the raw observed proportion.
+
+        Expects each run_record to optionally carry `record[successes_field]`
+        as a bool (True = success). Records where the field is missing/None
+        are excluded from the sample. A raw proportion (e.g. 9/10) can look
+        good but be statistically unreliable at small sample sizes — the
+        Wilson lower bound accounts for that, so a `strict=True` candidate
+        can't clear the bar on a lucky small sample the way it could on the
+        point estimate alone.
+        """
+        if not (0.0 < confidence < 1.0):
+            raise ValueError(f"confidence must be in (0, 1), got {confidence}")
+
+        z = NormalDist().inv_cdf(1 - (1 - confidence) / 2)
+        result_name = f"wilson_lower_bound({successes_field})"
+
+        def _check(records: list[dict[str, Any]]) -> ContractResult:
+            outcomes = [bool(r[successes_field]) for r in records if r.get(successes_field) is not None]
+            n = len(outcomes)
+            if n == 0:
+                return ContractResult(
+                    result_name, satisfied=False, detail=f"no '{successes_field}' found on any run record"
+                )
+
+            successes = sum(outcomes)
+            p_hat = successes / n
+            z2 = z * z
+            denom = 1 + z2 / n
+            center = p_hat + z2 / (2 * n)
+            margin = z * math.sqrt((p_hat * (1 - p_hat) / n) + (z2 / (4 * n * n)))
+            lower_bound = (center - margin) / denom
+
+            return ContractResult(
+                result_name,
+                satisfied=lower_bound >= minimum,
+                observed_value=lower_bound,
+                threshold=minimum,
+                detail=f"{successes}/{n} successes, {confidence:.0%} Wilson lower bound={lower_bound:.4f}",
+            )
+
+        return Contract(f"{result_name}>={minimum}", _check, strict=strict)
 
     @staticmethod
     def abstain_when_unsupported(*, strict: bool = True) -> "Contract":

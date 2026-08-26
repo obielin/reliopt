@@ -6,6 +6,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); version
 ## [Unreleased]
 
 ### Added
+- `Contract.wilson_lower_bound(successes_field, minimum, confidence=0.95)`: a generic
+  rate-based contract that gates on the lower bound of the Wilson score interval for a
+  boolean field, instead of the raw observed proportion, so small samples can't clear a
+  threshold on a lucky point estimate.
 - Core v0.1 loop: `Program` adapter, `Contract` + 4 built-ins, `Objective` + 4 built-ins,
   perturbation engine with 2 deterministic perturbers, `Compiler` with grid/explicit search,
   Pareto frontier computation, `CompileResult`/`EvidenceCard` reporting.
