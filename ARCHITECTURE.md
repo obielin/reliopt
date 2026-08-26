@@ -31,12 +31,16 @@ Attribution (component ablation) is a separate, not-yet-wired-in module — see
 - `Program`: wraps plain callables and duck-typed `dspy.Module`-style objects
   (anything with `.forward()`). Traces exactly one `TrajectoryStep` per call —
   the call boundary, not sub-calls inside the wrapped program.
-- `Contract`: base class + four built-ins (`groundedness`, `schema_valid`,
-  `tool_scope`, `abstain_when_unsupported`). All four depend on fields
-  (`groundedness_score`, `schema_error`, `tools_used`, `should_abstain`/
-  `abstained`) that only YOUR domain logic can compute — wire them in via
-  `Compiler(enrich_fn=...)`. Without an enrich_fn, these contracts correctly
-  report "not satisfied" (no silent pass) rather than doing nothing useful.
+- `Contract`: base class + five built-ins (`groundedness`, `schema_valid`,
+  `tool_scope`, `abstain_when_unsupported`, `wilson_lower_bound`). The first
+  four depend on fields (`groundedness_score`, `schema_error`, `tools_used`,
+  `should_abstain`/`abstained`) that only YOUR domain logic can compute —
+  wire them in via `Compiler(enrich_fn=...)`. Without an enrich_fn, these
+  contracts correctly report "not satisfied" (no silent pass) rather than
+  doing nothing useful. `wilson_lower_bound` is a generic rate-based
+  contract: it gates on the lower bound of the Wilson score interval for any
+  boolean field, rather than the raw observed proportion, so a threshold
+  can't be cleared on a lucky small sample.
 - `Objective`: base class + four built-ins (`accuracy`, `cost`, `latency`,
   `consistency`). `consistency` needs `repeat_n > 1` on the Compiler to mean
   anything — with `repeat_n=1` it always returns 1.0, which is a "not
