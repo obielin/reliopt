@@ -30,20 +30,7 @@ This is a meta-layer, not a replacement for your agent framework: it wraps arbit
 callables and `dspy.Module` instances today, with LangGraph/pydantic-ai adapters planned.
 
 ## How this differs from adjacent projects
-
-- **DSPy** already has [LM Assertions](https://arxiv.org/abs/2312.13382) — per-output hard/soft
-  constraints enforced via backtracking. Contracts here serve a different purpose: they gate
-  *candidates* across a whole trainset at compile time, feeding a Pareto filter, rather than
-  triggering retries within a single inference call. A `dspy.Module` using Assertions internally
-  can still be wrapped and scored here — the two are complementary, not competing.
-- **Promptfoo / Inspect** are evaluation and red-teaming runtimes — they test and report. This
-  framework's value isn't the evaluation runtime; it's what the compiler *does* with the
-  evidence: diagnose, search, and return trade-off-aware candidates. Integrating with either as
-  an evaluator backend is a natural extension point, not a competing rebuild.
-- **Multi-objective prompt optimization** (e.g. MO-CAPO) already exists as a research direction.
-  The contribution here is the combination — contracts + multi-objective search + automated
-  stress-testing + component attribution as one coherent compile → diagnose → optimize → explain
-  loop, not any one piece in isolation.
+See [research/RELATED_WORK.md](research/RELATED_WORK.md) for a full comparison against DSPy, Promptfoo, Inspect, and MO-CAPO.
 
 ## Quick start
 
