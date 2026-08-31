@@ -13,8 +13,9 @@ from __future__ import annotations
 
 import inspect
 import time
-from dataclasses import dataclass, field
-from typing import Any, Callable, Optional
+from collections.abc import Callable
+from dataclasses import dataclass
+from typing import Any
 
 from reliopt.contracts.base import Contract
 from reliopt.objectives.base import Objective
@@ -29,7 +30,7 @@ class ProgramRun:
     output: Any
     trajectory: Trajectory
     latency_seconds: float
-    error: Optional[Exception] = None
+    error: Exception | None = None
 
 
 class Program:
@@ -47,7 +48,7 @@ class Program:
         - raw OpenAI/Anthropic tool-use loops
     """
 
-    def __init__(self, target: Callable[..., Any], *, name: Optional[str] = None):
+    def __init__(self, target: Callable[..., Any], *, name: str | None = None):
         self.target = target
         self.name = name or getattr(target, "__name__", target.__class__.__name__)
         self._contracts: list[Contract] = []
@@ -55,12 +56,12 @@ class Program:
 
     # -- configuration -----------------------------------------------------
 
-    def contracts(self, *contracts: Contract) -> "Program":
+    def contracts(self, *contracts: Contract) -> Program:
         """Attach hard/soft behavioral requirements. Chainable."""
         self._contracts.extend(contracts)
         return self
 
-    def objectives(self, *objectives: Objective) -> "Program":
+    def objectives(self, *objectives: Objective) -> Program:
         """Attach the metrics to optimise (and their direction). Chainable."""
         self._objectives.extend(objectives)
         return self
@@ -80,7 +81,7 @@ class Program:
         output = None
         try:
             output = self._invoke(**inputs)
-        except Exception as exc:  # noqa: BLE001 — deliberately broad, we record and re-surface
+        except Exception as exc:
             error = exc
         elapsed = time.perf_counter() - start
 
@@ -98,7 +99,7 @@ class Program:
         )
 
     def _invoke(self, **inputs: Any) -> Any:
-        if hasattr(self.target, "forward") and callable(getattr(self.target, "forward")):
+        if hasattr(self.target, "forward") and callable(self.target.forward):
             # dspy.Module-style: prefer .forward if present
             return self.target.forward(**inputs)
         if callable(self.target):

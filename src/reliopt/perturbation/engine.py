@@ -14,9 +14,8 @@ bloat the first release. Track this in the roadmap, not silently skip it.
 from __future__ import annotations
 
 import random
-import re
 from dataclasses import dataclass
-from typing import Any, Callable, Protocol
+from typing import Any, ClassVar, Protocol
 
 
 @dataclass
@@ -56,7 +55,7 @@ class InjectDistractorSentencePerturber:
     to test whether the program is distracted by irrelevant context."""
 
     name = "inject_distractor"
-    _DISTRACTORS = [
+    _DISTRACTORS: ClassVar[list[str]] = [
         "The weather in the office was mild that day.",
         "Unrelated note: the printer on the third floor was out of toner.",
         "For reference, the meeting had been rescheduled twice before.",

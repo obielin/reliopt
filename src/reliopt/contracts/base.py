@@ -20,17 +20,18 @@ still be wrapped in a Program and scored against Contracts here.
 from __future__ import annotations
 
 import math
+from collections.abc import Callable
 from dataclasses import dataclass
 from statistics import NormalDist
-from typing import Any, Callable, Optional
+from typing import Any
 
 
 @dataclass
 class ContractResult:
     contract_name: str
     satisfied: bool
-    observed_value: Optional[float] = None
-    threshold: Optional[float] = None
+    observed_value: float | None = None
+    threshold: float | None = None
     detail: str = ""
 
 
@@ -64,7 +65,7 @@ class Contract:
     # -- built-in factories --------------------------------------------------
 
     @staticmethod
-    def groundedness(minimum: float, *, strict: bool = True) -> "Contract":
+    def groundedness(minimum: float, *, strict: bool = True) -> Contract:
         """
         Placeholder scorer: expects each run_record to optionally carry a
         precomputed `record["groundedness_score"]` (e.g. from a retrieval
@@ -73,7 +74,9 @@ class Contract:
         """
 
         def _check(records: list[dict[str, Any]]) -> ContractResult:
-            scores = [r.get("groundedness_score") for r in records if r.get("groundedness_score") is not None]
+            scores: list[float] = [
+                v for r in records if (v := r.get("groundedness_score")) is not None
+            ]
             if not scores:
                 return ContractResult(
                     "groundedness", satisfied=False, detail="no groundedness_score found on any run record"
@@ -89,7 +92,7 @@ class Contract:
         return Contract(f"groundedness>={minimum}", _check, strict=strict)
 
     @staticmethod
-    def schema_valid(*, strict: bool = True) -> "Contract":
+    def schema_valid(*, strict: bool = True) -> Contract:
         """Expects each output to be a dict/pydantic model; flags raw parse failures."""
 
         def _check(records: list[dict[str, Any]]) -> ContractResult:
@@ -105,7 +108,7 @@ class Contract:
         return Contract("schema_valid", _check, strict=strict)
 
     @staticmethod
-    def tool_scope(expected: list[str], *, strict: bool = True) -> "Contract":
+    def tool_scope(expected: list[str], *, strict: bool = True) -> Contract:
         """Flags any run whose trajectory used a tool outside `expected`."""
 
         def _check(records: list[dict[str, Any]]) -> ContractResult:
@@ -131,7 +134,7 @@ class Contract:
         *,
         confidence: float = 0.95,
         strict: bool = True,
-    ) -> "Contract":
+    ) -> Contract:
         """
         Gates on the lower bound of the Wilson score interval for a boolean
         success-rate field, rather than the raw observed proportion.
@@ -177,7 +180,7 @@ class Contract:
         return Contract(f"{result_name}>={minimum}", _check, strict=strict)
 
     @staticmethod
-    def abstain_when_unsupported(*, strict: bool = True) -> "Contract":
+    def abstain_when_unsupported(*, strict: bool = True) -> Contract:
         """
         Expects a `record["should_abstain"]` (ground truth) and
         `record["abstained"]` (what the program did) pair.

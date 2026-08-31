@@ -10,7 +10,7 @@ framework silently choosing for them.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Literal
+from typing import Literal
 
 from reliopt.compiler.pareto import Candidate, pareto_frontier
 
@@ -74,14 +74,14 @@ class CompileResult:
             except KeyError:
                 return 0.0
 
-        if profile == "quality_first":
-            key = lambda c: -obj(c, "accuracy")
-        elif profile == "low_cost":
-            key = lambda c: obj(c, "cost")
-        elif profile == "high_reliability":
-            key = lambda c: -obj(c, "consistency")
-        else:  # balanced — simple normalised-rank average across objectives present
-            def key(c: Candidate) -> float:
+        def key(c: Candidate) -> float:
+            if profile == "quality_first":
+                return -obj(c, "accuracy")
+            elif profile == "low_cost":
+                return obj(c, "cost")
+            elif profile == "high_reliability":
+                return -obj(c, "consistency")
+            else:  # balanced — simple normalised-rank average across objectives present
                 ranks = []
                 for name in {s.objective_name for s in c.objective_scores}:
                     values = [x.score(name) for x in frontier]
@@ -90,7 +90,7 @@ class CompileResult:
                     ranks.append(sorted_vals.index(c.score(name)))
                 return sum(ranks) / len(ranks) if ranks else 0.0
 
-        return sorted(frontier, key=key)[0]
+        return min(frontier, key=key)
 
     def evidence_card(self, candidate_id: str) -> EvidenceCard:
         candidate = next((c for c in self.candidates if c.id == candidate_id), None)

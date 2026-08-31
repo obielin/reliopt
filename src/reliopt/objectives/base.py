@@ -11,8 +11,9 @@ are v0.2+ per ARCHITECTURE.md.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Callable, Literal
+from typing import Any, Literal
 
 Direction = Literal["maximise", "minimise"]
 
@@ -36,7 +37,7 @@ class Objective:
     # -- built-in factories --------------------------------------------------
 
     @staticmethod
-    def accuracy(*, maximise: bool = True) -> "Objective":
+    def accuracy(*, maximise: bool = True) -> Objective:
         def _score(records: list[dict[str, Any]]) -> float:
             scored = [r for r in records if "correct" in r]
             if not scored:
@@ -46,7 +47,7 @@ class Objective:
         return Objective("accuracy", _score, direction="maximise" if maximise else "minimise")
 
     @staticmethod
-    def cost(*, minimise: bool = True) -> "Objective":
+    def cost(*, minimise: bool = True) -> Objective:
         def _score(records: list[dict[str, Any]]) -> float:
             costs = [r["trajectory"].total_cost_usd for r in records if r.get("trajectory") is not None]
             return sum(costs) / len(costs) if costs else 0.0
@@ -54,7 +55,7 @@ class Objective:
         return Objective("cost", _score, direction="minimise" if minimise else "maximise")
 
     @staticmethod
-    def latency(*, minimise: bool = True) -> "Objective":
+    def latency(*, minimise: bool = True) -> Objective:
         def _score(records: list[dict[str, Any]]) -> float:
             latencies = [r["trajectory"].total_latency_seconds for r in records if r.get("trajectory") is not None]
             return sum(latencies) / len(latencies) if latencies else 0.0
@@ -62,7 +63,7 @@ class Objective:
         return Objective("latency", _score, direction="minimise" if minimise else "maximise")
 
     @staticmethod
-    def consistency(*, maximise: bool = True) -> "Objective":
+    def consistency(*, maximise: bool = True) -> Objective:
         """
         Placeholder v0.1 reliability metric: fraction of repeated runs (same
         input, run `n` times) that produced the same output. Expects

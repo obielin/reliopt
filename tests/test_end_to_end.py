@@ -5,7 +5,7 @@ without erroring. This is the "does the whole pipeline actually run" smoke
 test — not a claim that any of the scoring logic is production-grade yet.
 """
 
-from reliopt import Program, Contract, Objective
+from reliopt import Contract, Objective, Program
 
 
 def toy_answerer(question: str, verbosity: int = 1) -> str:

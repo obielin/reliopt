@@ -22,15 +22,15 @@ project history in this repo's CHANGELOG.
 from __future__ import annotations
 
 import itertools
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Callable, Optional
+from typing import Any
 
 from reliopt.compiler.pareto import Candidate
 from reliopt.compiler.result import CompileResult
 from reliopt.contracts.base import Contract
 from reliopt.objectives.base import Objective
 from reliopt.perturbation.engine import Perturber, generate_perturbations
-
 
 ConfigureFn = Callable[[Any, dict[str, Any]], Any]
 
@@ -47,13 +47,13 @@ class Compiler:
     program: Any  # reliopt.program.Program
     contracts: list[Contract]
     objectives: list[Objective]
-    config_space: Optional[dict[str, list[Any]]] = None
-    candidates: Optional[list[dict[str, Any]]] = None
+    config_space: dict[str, list[Any]] | None = None
+    candidates: list[dict[str, Any]] | None = None
     configure_fn: ConfigureFn = _default_configure_fn
-    perturbers: Optional[list[Perturber]] = None
+    perturbers: list[Perturber] | None = None
     repeat_n: int = 1
     max_candidates: int = 25
-    enrich_fn: Optional[Callable[[dict[str, Any]], dict[str, Any]]] = None
+    enrich_fn: Callable[[dict[str, Any]], dict[str, Any]] | None = None
     """
     Optional hook run on each record right after execution, before contracts/
     objectives see it. Use this to populate domain-specific fields that
@@ -70,7 +70,7 @@ class Compiler:
         if self.config_space:
             keys = list(self.config_space.keys())
             combos = list(itertools.product(*(self.config_space[k] for k in keys)))
-            configs = [dict(zip(keys, combo)) for combo in combos]
+            configs = [dict(zip(keys, combo, strict=True)) for combo in combos]
             return configs[: self.max_candidates]
         # No search space given: single candidate = program as-is.
         return [{}]

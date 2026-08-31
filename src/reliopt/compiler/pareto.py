@@ -38,7 +38,7 @@ class Candidate:
 def _dominates(a: Candidate, b: Candidate) -> bool:
     at_least_as_good_everywhere = True
     strictly_better_somewhere = False
-    for score_a, score_b in zip(a.objective_scores, b.objective_scores):
+    for score_a, score_b in zip(a.objective_scores, b.objective_scores, strict=True):
         if score_a.objective_name != score_b.objective_name:
             raise ValueError("Candidates must be scored on the same objectives in the same order")
         higher_is_better = score_a.direction == "maximise"
