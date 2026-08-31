@@ -14,9 +14,8 @@ bloat the first release. Track this in the roadmap, not silently skip it.
 from __future__ import annotations
 
 import random
-import re
 from dataclasses import dataclass
-from typing import Any, Callable, Protocol
+from typing import Any, Protocol
 
 
 @dataclass

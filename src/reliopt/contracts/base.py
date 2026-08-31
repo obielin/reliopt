@@ -73,7 +73,9 @@ class Contract:
         """
 
         def _check(records: list[dict[str, Any]]) -> ContractResult:
-            scores = [r.get("groundedness_score") for r in records if r.get("groundedness_score") is not None]
+            scores: list[float] = [
+                v for r in records if (v := r.get("groundedness_score")) is not None
+            ]
             if not scores:
                 return ContractResult(
                     "groundedness", satisfied=False, detail="no groundedness_score found on any run record"
