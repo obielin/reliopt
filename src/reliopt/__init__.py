@@ -25,17 +25,17 @@ defensible trade-off between quality, robustness, cost, and efficiency.
     print(result.evidence_card())
 """
 
-from reliopt.program import Program
+from reliopt.compiler.result import CompileResult, EvidenceCard
 from reliopt.contracts.base import Contract
 from reliopt.objectives.base import Objective
-from reliopt.compiler.result import CompileResult, EvidenceCard
+from reliopt.program import Program
 
 __all__ = [
-    "Program",
-    "Contract",
-    "Objective",
     "CompileResult",
+    "Contract",
     "EvidenceCard",
+    "Objective",
+    "Program",
 ]
 
 __version__ = "0.1.0-dev"

@@ -20,7 +20,7 @@ from __future__ import annotations
 
 import random
 
-from reliopt import Program, Contract, Objective
+from reliopt import Contract, Objective, Program
 from reliopt.compiler.engine import Compiler
 
 # A small fake knowledge base so groundedness has something real to check against.

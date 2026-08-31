@@ -18,8 +18,9 @@ without redesigning the interface.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Callable, Protocol
+from typing import Any, Protocol
 
 
 class ComponentAblator(Protocol):

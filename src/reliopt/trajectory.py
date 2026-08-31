@@ -16,7 +16,7 @@ a v0.2 item — see ARCHITECTURE.md's roadmap.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
 
 
 @dataclass
@@ -25,8 +25,8 @@ class TrajectoryStep:
     inputs: dict[str, Any] = field(default_factory=dict)
     output: Any = None
     latency_seconds: float = 0.0
-    cost_usd: Optional[float] = None
-    error: Optional[str] = None
+    cost_usd: float | None = None
+    error: str | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
 
 
