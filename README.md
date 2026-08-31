@@ -8,29 +8,28 @@ A good AI program is not the one with the highest score. It's the one that satis
 behavioral contracts while achieving the best defensible trade-off between quality,
 robustness, cost, and efficiency.
 
-Frameworks like [DSPy](https://github.com/stanfordnlp/dspy) ask: *how do I automatically make
-this LM program perform better against a metric?* This framework asks a different question:
-*what implementation of this program satisfies its behavioral requirements, remains robust
-under plausible variation, and provides the best acceptable quality–cost–reliability trade-off?*
-
 Concretely, that means:
 
 - **Contracts, not just scores** — hard/soft behavioral requirements (groundedness, schema
   validity, tool scope) that gate candidates, separate from the objectives you're optimizing.
+  A candidate that violates a contract is excluded from consideration entirely, no matter how
+  well it scores elsewhere.
 - **Pareto frontiers, not a weighted-sum score** — collapsing accuracy/cost/robustness into one
-  number conceals the trade-off. This framework returns the non-dominated candidate set and lets
-  you pick a profile (`quality_first`, `balanced`, `low_cost`, `high_reliability`).
+  number conceals the trade-off. This framework returns the non-dominated candidate set and
+  lets you pick a profile (`quality_first`, `balanced`, `low_cost`, `high_reliability`).
 - **Automated stress-testing** — candidates are scored on perturbed variants of your trainset
   (reordered clauses, injected distractors, and your own domain-specific perturbers), not just
   the nominal examples.
 - **Component attribution** (in progress — see Roadmap) — controlled ablation to answer *why*
   one architecture outperforms another, not just *that* it does.
 
-This is a meta-layer, not a replacement for your agent framework: it wraps arbitrary Python
-callables and `dspy.Module` instances today, with LangGraph/pydantic-ai adapters planned.
+reliopt is a meta-layer, not a replacement for your agent framework: it wraps arbitrary Python
+callables today, with adapters for popular frameworks planned as the ecosystem grows.
 
-## How this differs from adjacent projects
-See [research/RELATED_WORK.md](research/RELATED_WORK.md) for a full comparison against DSPy, Promptfoo, Inspect, and MO-CAPO.
+## Related work
+
+See [research/RELATED_WORK.md](research/RELATED_WORK.md) for how this relates to DSPy,
+Promptfoo, Inspect, and MO-CAPO.
 
 ## Quick start
 
