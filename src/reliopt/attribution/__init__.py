@@ -3,5 +3,11 @@ from reliopt.attribution.engine import (
     ComponentAblator,
     run_attribution,
 )
+from reliopt.attribution.pipeline_ablator import PipelineAblator
 
-__all__ = ["AttributionResult", "ComponentAblator", "run_attribution"]
+__all__ = [
+    "AttributionResult",
+    "ComponentAblator",
+    "PipelineAblator",
+    "run_attribution",
+]
