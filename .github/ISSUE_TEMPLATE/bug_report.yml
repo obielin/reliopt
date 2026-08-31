@@ -1,0 +1,42 @@
+name: Bug Report
+description: Report a bug in reliopt
+title: "Bug: "
+labels: ["bug"]
+body:
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checked other resources
+      options:
+        - label: This is a bug, not a usage question. For questions, please open a new issue with the "question" label instead.
+          required: true
+        - label: I added a very descriptive title to this issue.
+          required: true
+        - label: I checked README.md, ARCHITECTURE.md, and CONTRIBUTING.md and didn't find an answer.
+          required: true
+        - label: I used the GitHub search to find a similar issue and didn't find one.
+          required: true
+        - label: I am sure this is a bug in reliopt rather than my own code.
+          required: true
+        - label: The bug is not resolved by updating to the latest version of reliopt.
+          required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Minimal reproduction
+      description: Program/Contract/Objective setup that triggers this, as small as possible.
+      render: python
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected vs actual behaviour
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: reliopt version
+    validations:
+      required: true

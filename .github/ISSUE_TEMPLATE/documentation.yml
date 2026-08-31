@@ -1,0 +1,25 @@
+name: Documentation
+description: Report a problem or gap in reliopt's documentation
+title: "Docs: "
+labels: ["documentation"]
+body:
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      options:
+        - label: I added a very descriptive title to this issue.
+          required: true
+        - label: I included a link to the documentation page I am referring to, if applicable.
+          required: false
+  - type: textarea
+    id: issue
+    attributes:
+      label: Issue with documentation
+      description: What's missing, unclear, or wrong?
+    validations:
+      required: true
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: Suggested fix (optional) 
