@@ -55,6 +55,6 @@ def test_pipeline_rejects_non_callable_step():
 
 def test_passthrough_returns_single_value_unchanged():
     assert passthrough(42) == 42
-    assert passthrough(question="q") == "q"
+    assert passthrough(question="q") == {"question": "q"}
     sentinel = object()
     assert passthrough(sentinel) is sentinel
