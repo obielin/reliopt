@@ -118,10 +118,56 @@ class Compiler:
                     contract_results=contract_results,
                     attribution_results=attribution_results,
                     attribution_skipped_reason=attribution_skipped_reason,
+                    failure_clusters=self._failure_clusters(run_records),
                 )
             )
 
         return CompileResult(candidates=candidate_results)
+
+    def _failure_clusters(self, run_records: list[dict[str, Any]]) -> dict[str, int]:
+        """
+        Group this candidate's run_records by *why* each one failed — no
+        embeddings, no new dependency (the embedding-similarity alternative
+        from CONTRIBUTING.md's roadmap was rejected for that reason; see
+        ARCHITECTURE.md). A record can land in more than one cluster (e.g. it
+        failed a contract *and* was scored incorrect) — labels are not
+        mutually exclusive, so this never forces one label per record.
+
+        Label formats:
+          "objective:accuracy"       - record["correct"] is False
+          "contract:<contract.name>" - this record, evaluated alone, fails
+                                        that contract's check
+          "perturbation:<type>"      - record came from a perturbed input
+                                        (nominal records carry no
+                                        perturbation_type at all)
+
+        Contracts are aggregate checks over a whole candidate (e.g.
+        `groundedness`'s mean score, `wilson_lower_bound`'s interval) — there
+        is no separate "per-record verdict" API. Re-running `contract.evaluate`
+        on a single-record list is how each built-in naturally degrades to a
+        per-record check (a record's own score vs. the threshold, its own
+        boolean field, etc.) without changing the Contract interface. This is
+        pure computation over records already collected for scoring — no new
+        program executions, so (unlike attribution) it needs no opt-in flag.
+        """
+        counts: dict[str, int] = {}
+
+        def bump(label: str) -> None:
+            counts[label] = counts.get(label, 0) + 1
+
+        for record in run_records:
+            if record.get("correct") is False:
+                bump("objective:accuracy")
+
+            perturbation_type = record.get("perturbation_type")
+            if perturbation_type:
+                bump(f"perturbation:{perturbation_type}")
+
+            for contract in self.contracts:
+                if not contract.evaluate([record]).satisfied:
+                    bump(f"contract:{contract.name}")
+
+        return counts
 
     def _attribution_for_candidate(
         self, configured_program: Any, trainset: list[dict[str, Any]]
