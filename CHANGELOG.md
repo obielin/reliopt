@@ -6,6 +6,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); version
 ## [Unreleased]
 
 ### Added
+- `EvidenceCard.failure_clusters` is now populated, via `Compiler._failure_clusters` —
+  no new dependency: every run record is grouped by *why* it failed, not by embedding
+  similarity (that alternative was rejected for v0.1 on the dependency grounds; see
+  ARCHITECTURE.md). Labels are `"objective:accuracy"`, `"contract:<name>"` (that record
+  alone re-evaluated against the contract), and `"perturbation:<type>"` — a record can
+  land in more than one cluster, never forced into just one. Always computed (no opt-in
+  flag: pure computation over records already collected for scoring, not an extra program
+  execution, unlike attribution).
 - `Compiler(attribution=True)` (opt-in, default `False`): runs component attribution for
   every candidate whose configured program wraps a `Pipeline`, using `PipelineAblator`
   against the nominal trainset only (no perturbations, to avoid compounding attribution's

@@ -117,6 +117,7 @@ class CompileResult:
             rejection_reason=f"violated: {', '.join(violated)}" if violated else "",
             attribution=attribution,
             attribution_skipped_reason=candidate.attribution_skipped_reason or "",
+            failure_clusters=dict(candidate.failure_clusters),
         )
 
     def render_table(self) -> str:

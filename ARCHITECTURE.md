@@ -87,6 +87,19 @@ Attribution (component ablation) is a separate module, not yet wired into
   available for `Pipeline`-structured programs only — a plain `Program`
   wrapping an opaque callable still has no enumerable internal components
   (see "What's stubbed").
+- **Failure clustering**: `EvidenceCard.failure_clusters` is populated by
+  `Compiler._failure_clusters`, no new dependency — group by failure
+  *reason*, not embedding similarity (the embedding option from the original
+  v0.2 scope note was rejected: it would need a new dependency, against the
+  zero-mandatory-dependency principle below; worth revisiting later as an
+  opt-in extra). Every run record is labeled `"objective:accuracy"` (its
+  `correct` field is `False`), `"contract:<name>"` (that record alone, run
+  back through `Contract.evaluate([record])`, fails that contract's check),
+  and/or `"perturbation:<type>"` (it came from a perturbed input) — a record
+  can and often does land in more than one cluster, never forced into just
+  one. Always computed, no opt-in flag needed: unlike attribution, this is
+  pure computation over records already collected for scoring, not an extra
+  program execution.
 
 ## What's stubbed / seams-only
 
@@ -98,10 +111,6 @@ Attribution (component ablation) is a separate module, not yet wired into
   is the project's deepest research contribution — see the README's framing —
   and the highest-value place for a substantial contribution (or for Linda's
   own research work specifically).
-- **Failure clustering**: `EvidenceCard.failure_clusters` exists as a field
-  but nothing populates it yet. v0.2 scope: cluster failed records (e.g. by
-  embedding similarity of the input, or by which contract/objective failed)
-  and report cluster sizes.
 - **LangGraph / pydantic-ai / raw tool-use adapters**: `Program` only
   supports plain callables and duck-typed `dspy.Module`s today.
 - **Richer trajectory tracing**: sub-calls inside a wrapped program (e.g. a
@@ -136,5 +145,4 @@ Attribution (component ablation) is a separate module, not yet wired into
   highest-value contribution possible right now.
 - Add an LLM-based perturber (paraphrase, adversarial injection) behind a
   clearly-marked "costs API calls" flag.
-- Implement failure clustering for `EvidenceCard.failure_clusters`.
 - Add a LangGraph `Program` adapter.

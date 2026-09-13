@@ -11,7 +11,7 @@ objective and strictly better on at least one.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 from reliopt.attribution.engine import AttributionResult
@@ -33,6 +33,12 @@ class Candidate:
     # leaving it a silent None. None when attribution wasn't requested, or was
     # requested and succeeded.
     attribution_skipped_reason: str | None = None
+    # label -> count of run_records contributing to it — see
+    # Compiler._failure_clusters for how labels are derived. Always computed
+    # (no opt-in flag: it's pure computation over records already collected
+    # for scoring, no extra program executions). Empty dict, not a missing
+    # value, when nothing failed.
+    failure_clusters: dict[str, int] = field(default_factory=dict)
 
     @property
     def satisfies_all_strict_contracts(self) -> bool:
