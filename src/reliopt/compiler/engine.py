@@ -5,6 +5,7 @@ Compiler — orchestrates the full compile loop:
         run program (as configured) over trainset + perturbations
         score objectives
         evaluate contracts
+        (opt-in) run component attribution — see `attribution` field below
     return CompileResult (Pareto frontier + evidence cards)
 
 v0.1 search strategy: grid/explicit search over a user-supplied
@@ -26,11 +27,15 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
+from reliopt.attribution.engine import AttributionResult, run_attribution
+from reliopt.attribution.pipeline_ablator import PipelineAblator
 from reliopt.compiler.pareto import Candidate
 from reliopt.compiler.result import CompileResult
 from reliopt.contracts.base import Contract
 from reliopt.objectives.base import Objective
 from reliopt.perturbation.engine import Perturber, generate_perturbations
+from reliopt.pipeline import Pipeline
+from reliopt.program import Program
 
 ConfigureFn = Callable[[Any, dict[str, Any]], Any]
 
@@ -63,6 +68,18 @@ class Compiler:
     tool_scope() will find no data and correctly report unsatisfied rather
     than silently passing — see contracts/base.py docstrings.
     """
+    attribution: bool = False
+    """
+    Opt-in, default OFF. When True, run component attribution for every
+    candidate whose configured program wraps a `Pipeline` (see pipeline.py
+    and attribution/pipeline_ablator.py) — the only `ComponentAblator`
+    implementation today. This is never turned on silently: it's roughly
+    "one extra full evaluation per ablatable component" on top of normal
+    candidate scoring (see attribution/engine.py), so defaulting it on would
+    silently multiply compute cost across every candidate in the search.
+    A candidate whose program isn't a `Pipeline` is not silently skipped
+    either — see `Candidate.attribution_skipped_reason`.
+    """
 
     def _candidate_configs(self) -> list[dict[str, Any]]:
         if self.candidates is not None:
@@ -86,16 +103,66 @@ class Compiler:
             objective_scores = [obj.evaluate(run_records) for obj in self.objectives]
             contract_results = [contract.evaluate(run_records) for contract in self.contracts]
 
+            attribution_results: list[AttributionResult] | None = None
+            attribution_skipped_reason: str | None = None
+            if self.attribution:
+                attribution_results, attribution_skipped_reason = self._attribution_for_candidate(
+                    configured_program, trainset
+                )
+
             candidate_results.append(
                 Candidate(
                     id=f"candidate_{i}",
                     config=config,
                     objective_scores=objective_scores,
                     contract_results=contract_results,
+                    attribution_results=attribution_results,
+                    attribution_skipped_reason=attribution_skipped_reason,
                 )
             )
 
         return CompileResult(candidates=candidate_results)
+
+    def _attribution_for_candidate(
+        self, configured_program: Any, trainset: list[dict[str, Any]]
+    ) -> tuple[list[AttributionResult] | None, str | None]:
+        """
+        Component attribution for one already-configured candidate. Only
+        called when `attribution=True`. Returns
+        `(attribution_results, attribution_skipped_reason)` — exactly one of
+        the two is non-None, mirroring `Candidate`'s two fields.
+
+        Ablation targets the `Pipeline` a candidate's `Program` wraps
+        (`configured_program.target`), since `PipelineAblator` — currently
+        the only `ComponentAblator` — enumerates and ablates `Pipeline` steps,
+        not `Program` instances. A candidate that isn't `Program`-wrapping a
+        `Pipeline` at all (e.g. a bare Pipeline, or a plain callable) is
+        handled the same way via `getattr(..., "target", configured_program)`.
+        """
+        target = getattr(configured_program, "target", configured_program)
+        if not isinstance(target, Pipeline):
+            reason = (
+                "attribution=True but this candidate's program is not a Pipeline "
+                f"(got {type(target).__name__}); component attribution is only "
+                "implemented for Pipeline-structured programs today — see "
+                "attribution/pipeline_ablator.py."
+            )
+            return None, reason
+
+        program_name = getattr(configured_program, "name", None)
+
+        def evaluate_fn(pipeline: Pipeline) -> dict[str, float]:
+            wrapped = Program(pipeline, name=program_name)
+            # Nominal trainset only, no perturbations: run_attribution already
+            # costs one extra full evaluation per ablatable component (see its
+            # docstring) — running each of those against perturbations too
+            # would compound that multiplier further, on top of what the
+            # candidate's normal scoring above already pays.
+            records = self._evaluate_candidate(wrapped, trainset, [])
+            return {obj.name: obj.evaluate(records).value for obj in self.objectives}
+
+        results = run_attribution(program=target, ablator=PipelineAblator(), evaluate_fn=evaluate_fn)
+        return results, None
 
     def _evaluate_candidate(
         self,

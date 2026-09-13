@@ -22,7 +22,9 @@ Expected shape of the output:
 
 from __future__ import annotations
 
+from reliopt import Objective, Program
 from reliopt.attribution import PipelineAblator, run_attribution
+from reliopt.compiler.engine import Compiler
 from reliopt.pipeline import Pipeline
 
 # A tiny fake knowledge base so "groundedness" has something real to check.
@@ -113,6 +115,43 @@ def main() -> None:
     for result in results:
         row = f"  {result.component:<12}" + "".join(f"{result.deltas[k]:>+15.2f}" for k in baseline)
         print(row)
+
+    print()
+    print("=" * 70)
+    print("Same pipeline, reached the normal way: compile(attribution=True)")
+    print("=" * 70)
+    print()
+    demo_wired_through_compiler(pipeline)
+
+
+def demo_wired_through_compiler(pipeline: Pipeline) -> None:
+    """
+    Everything above called `run_attribution()` directly. This shows the
+    same attribution reached through the ordinary
+    compile() -> select() -> evidence_card() path, via
+    `Compiler(attribution=True)` (opt-in, default off — see
+    compiler/engine.py). No contracts here, just enough objectives to have
+    something for the Evidence Card to report.
+    """
+    program = Program(pipeline, name="rag_pipeline")
+    program.objectives(Objective.accuracy())
+
+    compiler = Compiler(
+        program=program,
+        contracts=[],
+        objectives=program._objectives,
+        attribution=True,
+    )
+    result = compiler.run(trainset=TRAINSET)
+
+    # Single candidate here (no config_space given) — attribution_results is
+    # populated because `program.target` is a Pipeline; a plain-callable
+    # Program would instead get `attribution_skipped_reason` set. See
+    # tests/test_compiler_attribution.py for both cases.
+    candidate = result.candidates[0]
+    assert candidate.attribution_results is not None, "expected attribution to run for a Pipeline candidate"
+
+    print(result.evidence_card(candidate.id).render())
 
 
 if __name__ == "__main__":

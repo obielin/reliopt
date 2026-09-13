@@ -14,6 +14,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
+from reliopt.attribution.engine import AttributionResult
 from reliopt.objectives.base import ObjectiveScore
 
 
@@ -23,6 +24,15 @@ class Candidate:
     config: dict[str, Any]
     objective_scores: list[ObjectiveScore]
     contract_results: list[Any]  # list[ContractResult], avoiding circular import here
+    # Both None unless Compiler(attribution=True) was used — see compiler/engine.py.
+    # attribution_results stays None (not []) when attribution wasn't requested at
+    # all, so "not measured" is distinguishable from "measured, zero components."
+    attribution_results: list[AttributionResult] | None = None
+    # Set when attribution=True but this candidate's program isn't ablatable
+    # (not a Pipeline) — explains an empty attribution_results rather than
+    # leaving it a silent None. None when attribution wasn't requested, or was
+    # requested and succeeded.
+    attribution_skipped_reason: str | None = None
 
     @property
     def satisfies_all_strict_contracts(self) -> bool:
