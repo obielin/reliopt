@@ -1,0 +1,63 @@
+name: Release
+
+# Publishes to PyPI via Trusted Publishing (OIDC) — no long-lived API token
+# stored anywhere. Split into two jobs per PyPA's recommended pattern: the
+# build job runs third-party build-backend code (hatchling, etc.) and must
+# NOT have id-token permission, since anything with that permission could
+# mint a PyPI credential. Only the publish job — which does nothing but
+# upload the already-built artifact — gets id-token: write.
+#
+# Requires a one-time manual step on pypi.org: add a Trusted Publisher for
+# this repo/workflow, with Environment name "pypi" matching the `environment:`
+# below exactly.
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    # No id-token permission here — this job runs the build backend
+    # (hatchling), which is third-party code we don't want able to mint a
+    # PyPI credential.
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install build tooling
+        run: pip install build twine
+
+      - name: Build sdist and wheel
+        run: python -m build
+
+      - name: Check package metadata / README rendering
+        run: twine check dist/*
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+    permissions:
+      id-token: write
+    steps:
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1

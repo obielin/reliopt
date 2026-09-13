@@ -6,6 +6,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); version
 ## [Unreleased]
 
 ### Added
+
+## [0.1.0] - 2026-09-14
+
+### Added
 - `EvidenceCard.failure_clusters` is now populated, via `Compiler._failure_clusters` —
   no new dependency: every run record is grouped by *why* it failed, not by embedding
   similarity (that alternative was rejected for v0.1 on the dependency grounds; see
