@@ -62,32 +62,42 @@ Attribution (component ablation) is a separate module, not yet wired into
 - `Pareto` frontier + `CompileResult.select(profile)` + `.evidence_card()`:
   fully working, no placeholders. Candidates violating any `strict=True`
   contract are excluded from the frontier entirely (not soft-penalized).
-- **Attribution for `Pipeline` programs**: `Pipeline` (`src/reliopt/pipeline.py`)
-  is a dependency-free program primitive — an ordered list of named
-  `(name, callable)` steps, each step's output feeding the next, the whole
-  thing callable so it drops into `Program`. `PipelineAblator`
-  (`src/reliopt/attribution/pipeline_ablator.py`) implements the
-  `ComponentAblator` protocol against it: `components()` returns the step
-  names (and raises `TypeError`, not `[]`, for a non-`Pipeline` program);
-  `ablate()` returns a deep-copied `Pipeline` with the named step swapped for
-  a passthrough. This is **zero-ablation** — the step is stubbed out with a
-  no-op that returns its input unchanged, *not* literally removed, and the
-  step count / wiring is unchanged. Run it via `run_attribution()`; see
-  `examples/attribution_demo.py`. Note the scope: this is available for
-  `Pipeline`-structured programs only — a plain `Program` wrapping an opaque
-  callable still has no enumerable internal components (see "What's stubbed").
+- **Attribution for `Pipeline` programs, wired into `Compiler`**: `Pipeline`
+  (`src/reliopt/pipeline.py`) is a dependency-free program primitive — an
+  ordered list of named `(name, callable)` steps, each step's output feeding
+  the next, the whole thing callable so it drops into `Program`.
+  `PipelineAblator` (`src/reliopt/attribution/pipeline_ablator.py`)
+  implements the `ComponentAblator` protocol against it: `components()`
+  returns the step names (and raises `TypeError`, not `[]`, for a
+  non-`Pipeline` program); `ablate()` returns a deep-copied `Pipeline` with
+  the named step swapped for a passthrough. This is **zero-ablation** — the
+  step is stubbed out with a no-op that returns its input unchanged, *not*
+  literally removed, and the step count / wiring is unchanged.
+  `Compiler(attribution=True)` (opt-in, default `False`) runs this for every
+  candidate whose configured program wraps a `Pipeline`, on the nominal
+  trainset only (no perturbations, so the cost stays "one extra full eval per
+  component," not that multiplied by perturbation count too), and
+  `CompileResult.evidence_card()` surfaces the result via
+  `EvidenceCard.attribution`. It's opt-in rather than automatic specifically
+  because it isn't free — see `Compiler.attribution`'s docstring. A candidate
+  whose program isn't a `Pipeline` is not silently skipped:
+  `Candidate.attribution_skipped_reason` / `EvidenceCard.attribution_skipped_reason`
+  say why. Run it standalone via `run_attribution()`, or through
+  `compile()`; see `examples/attribution_demo.py` for both. Note the scope:
+  available for `Pipeline`-structured programs only — a plain `Program`
+  wrapping an opaque callable still has no enumerable internal components
+  (see "What's stubbed").
 
 ## What's stubbed / seams-only
 
 - **Attribution beyond `Pipeline`**: `PipelineAblator` handles native
-  `Pipeline` programs (see "What's real"), but there's still no
-  `ComponentAblator` for the opaque program types — `dspy.Module` sub-modules,
-  LangGraph nodes, raw tool-use loops — where the internal structure isn't
-  expressed as a `Pipeline`. Attribution also isn't wired into `Compiler` or
-  `EvidenceCard` automatically yet (`EvidenceCard.attribution` still has no
-  automatic producer). This is the project's deepest research contribution —
-  see the README's framing — and the highest-value place for a substantial
-  contribution (or for Linda's own research work specifically).
+  `Pipeline` programs and is wired into `Compiler(attribution=True)` (see
+  "What's real"), but there's still no `ComponentAblator` for the opaque
+  program types — `dspy.Module` sub-modules, LangGraph nodes, raw tool-use
+  loops — where the internal structure isn't expressed as a `Pipeline`. This
+  is the project's deepest research contribution — see the README's framing —
+  and the highest-value place for a substantial contribution (or for Linda's
+  own research work specifically).
 - **Failure clustering**: `EvidenceCard.failure_clusters` exists as a field
   but nothing populates it yet. v0.2 scope: cluster failed records (e.g. by
   embedding similarity of the input, or by which contract/objective failed)

@@ -6,6 +6,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); version
 ## [Unreleased]
 
 ### Added
+- `Compiler(attribution=True)` (opt-in, default `False`): runs component attribution for
+  every candidate whose configured program wraps a `Pipeline`, using `PipelineAblator`
+  against the nominal trainset only (no perturbations, to avoid compounding attribution's
+  own per-component cost multiplier). Adds `Candidate.attribution_results` /
+  `Candidate.attribution_skipped_reason`, and `CompileResult.evidence_card()` now populates
+  `EvidenceCard.attribution` from it — `EvidenceCard.render()` prints a "component
+  attribution" section when present, or an explicit "skipped — ..." line when the candidate's
+  program wasn't a `Pipeline`, rather than a silently empty result either way.
 - `Pipeline` (`reliopt.pipeline`): a dependency-free program primitive — an ordered list
   of named `(name, callable)` steps, each step's output feeding the next, the whole thing
   callable so it drops straight into `Program`. Gives component attribution something with
@@ -24,8 +32,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); version
   perturbation engine with 2 deterministic perturbers, `Compiler` with grid/explicit search,
   Pareto frontier computation, `CompileResult`/`EvidenceCard` reporting.
 - Attribution module scaffold (`ComponentAblator` protocol, `run_attribution` loop) — now
-  with a concrete implementation for `Pipeline` programs (see above); still not wired into
-  `Compiler`/`EvidenceCard` automatically. See ARCHITECTURE.md.
+  with a concrete implementation for `Pipeline` programs, wired into `Compiler`/
+  `EvidenceCard` as opt-in (see above). See ARCHITECTURE.md.
 - Runnable end-to-end demo (`examples/rag_demo.py`).
 - Contributor infrastructure: CONTRIBUTING.md, CODE_OF_CONDUCT.md, SECURITY.md, GOVERNANCE.md,
   issue/PR templates.

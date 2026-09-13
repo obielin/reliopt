@@ -33,6 +33,10 @@ class EvidenceCard:
     rejected: bool
     rejection_reason: str = ""
     attribution: dict[str, dict[str, float]] = field(default_factory=dict)
+    # Set when Compiler(attribution=True) was used but this candidate's
+    # program wasn't ablatable (not a Pipeline) — explains why `attribution`
+    # is empty here rather than leaving that ambiguous with "not requested."
+    attribution_skipped_reason: str = ""
     failure_clusters: dict[str, int] = field(default_factory=dict)
 
     def render(self) -> str:
@@ -53,6 +57,8 @@ class EvidenceCard:
             for component, deltas in self.attribution.items():
                 delta_str = ", ".join(f"{k}: {v:+.3f}" for k, v in deltas.items())
                 lines.append(f"    {component:<20} {delta_str}")
+        elif self.attribution_skipped_reason:
+            lines.append(f"  component attribution: skipped — {self.attribution_skipped_reason}")
         return "\n".join(lines)
 
 
@@ -98,12 +104,19 @@ class CompileResult:
             raise KeyError(f"No candidate with id {candidate_id!r}")
         rejected = not candidate.satisfies_all_strict_contracts
         violated = [cr.contract_name for cr in candidate.contract_results if not cr.satisfied]
+        attribution = (
+            {result.component: dict(result.deltas) for result in candidate.attribution_results}
+            if candidate.attribution_results is not None
+            else {}
+        )
         return EvidenceCard(
             candidate_id=candidate.id,
             objective_summary={s.objective_name: s.value for s in candidate.objective_scores},
             contract_summary={cr.contract_name: cr.satisfied for cr in candidate.contract_results},
             rejected=rejected,
             rejection_reason=f"violated: {', '.join(violated)}" if violated else "",
+            attribution=attribution,
+            attribution_skipped_reason=candidate.attribution_skipped_reason or "",
         )
 
     def render_table(self) -> str:
