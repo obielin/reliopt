@@ -49,7 +49,7 @@ def passthrough(*args: Any, **kwargs: Any) -> Any:
     if args and not kwargs:
         return args[0] if len(args) == 1 else args
     if kwargs and not args:
-        return next(iter(kwargs.values())) if len(kwargs) == 1 else dict(kwargs)
+        return dict(kwargs)
     if not args and not kwargs:
         return None
     # Both positional and keyword args: nothing sensible to "pass through".

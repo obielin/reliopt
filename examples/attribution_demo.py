@@ -52,10 +52,12 @@ def retrieve(question: str) -> dict:
 
 def rerank(state: dict) -> dict:
     """Fake reranker: float the doc that names the question's country to the
-    top. Tolerates an ablated upstream step (non-dict input)."""
-    if not isinstance(state, dict):
+    top. Tolerates an ablated upstream step: `retrieve` zero-ablated returns
+    `{"question": ...}` with no "docs" key (a dict, but not the shape this
+    step expects), so check for the key too, not just the type."""
+    if not isinstance(state, dict) or "docs" not in state:
         return state
-    country = (_topic(state["question"]) or "").capitalize()
+    country = (_topic(state.get("question", "")) or "").capitalize()
     docs = sorted(state["docs"], key=lambda d: 0 if country and country in d else 1)
     return {**state, "docs": docs}
 
