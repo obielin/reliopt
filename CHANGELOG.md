@@ -6,6 +6,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); version
 ## [Unreleased]
 
 ### Added
+- `EvidenceCard.to_dict()`: returns all evidence card fields as a plain, JSON-serializable dictionary.
 
 ## [0.1.0] - 2026-09-14
 
