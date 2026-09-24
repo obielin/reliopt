@@ -1,5 +1,7 @@
 # reliopt
 
+[![PyPI](https://img.shields.io/pypi/v/reliopt)](https://pypi.org/project/reliopt/) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![CI](https://github.com/obielin/reliopt/actions/workflows/ci.yml/badge.svg)](https://github.com/obielin/reliopt/actions/workflows/ci.yml) [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](pyproject.toml)
+
 **Reliability-constrained, multi-objective optimization for LLM and agent programs.**
 
 ## The thesis
