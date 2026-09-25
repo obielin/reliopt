@@ -43,8 +43,9 @@ callables today, with adapters for popular frameworks planned as the ecosystem g
 
 ## Related work
 
-See [research/RELATED_WORK.md](research/RELATED_WORK.md) for how this relates to DSPy,
-Promptfoo, Inspect, and MO-CAPO.
+See [research/RELATED_WORK.md](research/RELATED_WORK.md) for how this relates to per-output
+constraint mechanisms, evaluation/red-teaming frameworks, and multi-objective prompt
+optimization.
 
 ## Install
 
