@@ -9,8 +9,8 @@ framework silently choosing for them.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Literal
+from dataclasses import asdict, dataclass, field
+from typing import Any, Literal
 
 from reliopt.compiler.pareto import Candidate, pareto_frontier
 
@@ -38,6 +38,10 @@ class EvidenceCard:
     # is empty here rather than leaving that ambiguous with "not requested."
     attribution_skipped_reason: str = ""
     failure_clusters: dict[str, int] = field(default_factory=dict)
+
+    def to_dict(self) -> dict[str, Any]:
+        """Return all fields as a plain, JSON-serializable dictionary."""
+        return asdict(self)
 
     def render(self) -> str:
         lines = [f"Candidate {self.candidate_id}"]
