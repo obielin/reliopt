@@ -71,6 +71,15 @@ class Contract:
         precomputed `record["groundedness_score"]` (e.g. from a retrieval
         overlap or NLI-based checker). Wire in a real scorer before relying
         on this — see CONTRIBUTING.md "Adding a contract scorer".
+
+        Example:
+            >>> from reliopt.contracts.base import Contract
+            >>> records = [{"groundedness_score": 0.9}, {"groundedness_score": 0.7}]
+            >>> result = Contract.groundedness(0.75).evaluate(records)
+            >>> result.satisfied
+            True
+            >>> result.observed_value
+            0.8
         """
 
         def _check(records: list[dict[str, Any]]) -> ContractResult:
@@ -93,7 +102,19 @@ class Contract:
 
     @staticmethod
     def schema_valid(*, strict: bool = True) -> Contract:
-        """Expects each output to be a dict/pydantic model; flags raw parse failures."""
+        """Expects each output to be a dict/pydantic model; flags raw parse failures.
+
+        A record counts as failed when it carries a ``schema_error`` flag.
+
+        Example:
+            >>> from reliopt.contracts.base import Contract
+            >>> records = [{"output": {"a": 1}}, {"schema_error": "not JSON"}]
+            >>> result = Contract.schema_valid().evaluate(records)
+            >>> result.satisfied
+            False
+            >>> result.observed_value
+            0.5
+        """
 
         def _check(records: list[dict[str, Any]]) -> ContractResult:
             failures = sum(1 for r in records if r.get("schema_error"))
@@ -109,7 +130,17 @@ class Contract:
 
     @staticmethod
     def tool_scope(expected: list[str], *, strict: bool = True) -> Contract:
-        """Flags any run whose trajectory used a tool outside `expected`."""
+        """Flags any run whose trajectory used a tool outside `expected`.
+
+        Example:
+            >>> from reliopt.contracts.base import Contract
+            >>> records = [{"tools_used": ["search"]}, {"tools_used": ["search", "shell"]}]
+            >>> result = Contract.tool_scope(["search"]).evaluate(records)
+            >>> result.satisfied
+            False
+            >>> result.observed_value
+            0.5
+        """
 
         def _check(records: list[dict[str, Any]]) -> ContractResult:
             violations = 0
@@ -146,6 +177,15 @@ class Contract:
         Wilson lower bound accounts for that, so a `strict=True` candidate
         can't clear the bar on a lucky small sample the way it could on the
         point estimate alone.
+
+        Example:
+            >>> from reliopt.contracts.base import Contract
+            >>> records = [{"ok": True}] * 9 + [{"ok": False}]
+            >>> result = Contract.wilson_lower_bound("ok", minimum=0.5).evaluate(records)
+            >>> result.satisfied
+            True
+            >>> round(result.observed_value, 4)
+            0.5958
         """
         if not (0.0 < confidence < 1.0):
             raise ValueError(f"confidence must be in (0, 1), got {confidence}")
@@ -188,6 +228,15 @@ class Contract:
         Gates on the Wilson lower bound of the correct-abstention rate (see
         `wilson_lower_bound`), not the raw observed rate — a small sample can
         clear 0.9 on a lucky run without abstention actually being reliable.
+
+        Example:
+            >>> from reliopt.contracts.base import Contract
+            >>> records = [{"should_abstain": True, "abstained": True}] * 50
+            >>> result = Contract.abstain_when_unsupported().evaluate(records)
+            >>> result.satisfied
+            True
+            >>> round(result.observed_value, 4)
+            0.9287
         """
 
         def _check(records: list[dict[str, Any]]) -> ContractResult:

@@ -38,6 +38,21 @@ class Objective:
 
     @staticmethod
     def accuracy(*, maximise: bool = True) -> Objective:
+        """Fraction of records with ``record["correct"]`` true.
+
+        Records without a ``"correct"`` key are ignored; with none scored
+        the value is 0.0.
+
+        Example:
+            >>> from reliopt.objectives.base import Objective
+            >>> records = [{"correct": True}, {"correct": True}, {"correct": False}]
+            >>> score = Objective.accuracy().evaluate(records)
+            >>> score.value
+            0.6666666666666666
+            >>> score.direction
+            'maximise'
+        """
+
         def _score(records: list[dict[str, Any]]) -> float:
             scored = [r for r in records if "correct" in r]
             if not scored:
@@ -48,6 +63,24 @@ class Objective:
 
     @staticmethod
     def cost(*, minimise: bool = True) -> Objective:
+        """Mean ``record["trajectory"].total_cost_usd`` over records with a trajectory.
+
+        Records without a trajectory are ignored; with none the value is 0.0.
+
+        Example:
+            >>> from types import SimpleNamespace
+            >>> from reliopt.objectives.base import Objective
+            >>> records = [
+            ...     {"trajectory": SimpleNamespace(total_cost_usd=0.02)},
+            ...     {"trajectory": SimpleNamespace(total_cost_usd=0.04)},
+            ... ]
+            >>> score = Objective.cost().evaluate(records)
+            >>> score.value
+            0.03
+            >>> score.direction
+            'minimise'
+        """
+
         def _score(records: list[dict[str, Any]]) -> float:
             costs = [r["trajectory"].total_cost_usd for r in records if r.get("trajectory") is not None]
             return sum(costs) / len(costs) if costs else 0.0
@@ -56,6 +89,24 @@ class Objective:
 
     @staticmethod
     def latency(*, minimise: bool = True) -> Objective:
+        """Mean ``record["trajectory"].total_latency_seconds`` over records with a trajectory.
+
+        Records without a trajectory are ignored; with none the value is 0.0.
+
+        Example:
+            >>> from types import SimpleNamespace
+            >>> from reliopt.objectives.base import Objective
+            >>> records = [
+            ...     {"trajectory": SimpleNamespace(total_latency_seconds=0.5)},
+            ...     {"trajectory": SimpleNamespace(total_latency_seconds=1.5)},
+            ... ]
+            >>> score = Objective.latency().evaluate(records)
+            >>> score.value
+            1.0
+            >>> score.direction
+            'minimise'
+        """
+
         def _score(records: list[dict[str, Any]]) -> float:
             latencies = [r["trajectory"].total_latency_seconds for r in records if r.get("trajectory") is not None]
             return sum(latencies) / len(latencies) if latencies else 0.0
@@ -70,6 +121,15 @@ class Objective:
         `record["repeat_outputs"]: list` to be populated by the compiler when
         repeat_n > 1. Returns 1.0 (best-case, not "verified") if no repeats
         were run — flagged clearly so it isn't mistaken for a real score.
+
+        Example:
+            >>> from reliopt.objectives.base import Objective
+            >>> records = [{"repeat_outputs": ["a", "a", "b"]}]
+            >>> score = Objective.consistency().evaluate(records)
+            >>> score.value
+            0.6666666666666666
+            >>> score.direction
+            'maximise'
         """
 
         def _score(records: list[dict[str, Any]]) -> float:
