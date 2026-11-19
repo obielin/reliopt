@@ -85,3 +85,27 @@ def test_contract_rejects_violating_candidate():
 
     frontier = result.pareto_frontier()
     assert frontier == [], "candidate violating a strict contract must be excluded from the frontier"
+
+
+def test_consistency_warns_without_repeated_execution():
+    import pytest
+
+    program = Program(lambda question: "answer")
+    program.objectives(Objective.consistency())
+    with pytest.warns(UserWarning, match="consistency.*repeat_n"):
+        program.compile(trainset=[{"question": "test"}])
+
+
+def test_consistency_with_repetitions_and_other_objectives_do_not_warn():
+    import warnings
+
+    for objectives, repeat_n in [
+        ([Objective.consistency()], 2),
+        ([Objective.latency()], 1),
+    ]:
+        program = Program(lambda question: "answer")
+        program.objectives(*objectives)
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            program.compile(trainset=[{"question": "test"}], repeat_n=repeat_n)
+        assert not caught
