@@ -23,6 +23,7 @@ project history in this repo's CHANGELOG.
 from __future__ import annotations
 
 import itertools
+import warnings
 from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
@@ -93,6 +94,15 @@ class Compiler:
         return [{}]
 
     def run(self, *, trainset: list[dict[str, Any]]) -> CompileResult:
+        if self.repeat_n <= 1 and any(
+            obj.name == "consistency" for obj in self.objectives
+        ):
+            warnings.warn(
+                "The consistency objective is unmeasured with repeat_n <= 1; "
+                "set repeat_n > 1 to compare repeated outputs.",
+                UserWarning,
+                stacklevel=2,
+            )
         perturbations = generate_perturbations(trainset, self.perturbers) if self.perturbers is not None else []
         candidate_results: list[Candidate] = []
 

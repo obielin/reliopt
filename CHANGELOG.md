@@ -5,6 +5,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); version
 
 ## [Unreleased]
 
+- Warn when the consistency objective is used with `repeat_n <= 1`, without increasing execution cost (#37).
+
 ### Added
 - `EvidenceCard.to_dict()`: returns all evidence card fields as a plain, JSON-serializable dictionary.
 
